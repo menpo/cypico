@@ -1,0 +1,3 @@
+[submodule "pico"]
+	path = pico
+	url = git@github.com:nenadmarkus/pico.git
