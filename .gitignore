@@ -2,3 +2,5 @@
 *~
 *.pyc
 build/*
+cypico/*.so
+cypico/pico.c
