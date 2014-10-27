@@ -4,3 +4,5 @@
 build/*
 cypico/*.so
 cypico/pico.c
+
+cypico.egg-info/*

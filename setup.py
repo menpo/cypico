@@ -4,6 +4,8 @@ import numpy as np
 
 cython_modules = ['cypico/pico.pyx']
 
+requirements = ['numpy==1.9.0', 'Cython==0.21']
+
 setup(name='cypico',
       version='0.1',
       description='A Cython wrapper around the Pico face detection library.',
@@ -16,5 +18,6 @@ setup(name='cypico',
                                'cypico/pico.pyx',
                                'cypico/pico_wrapper.h',
                                'cypico/pico_wrapper.c']},
+      install_requires=requirements,
       packages=find_packages()
 )
