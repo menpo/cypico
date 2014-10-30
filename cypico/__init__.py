@@ -1,1 +1,1 @@
-from pico import detect_faces
+from pico import detect_frontal_faces

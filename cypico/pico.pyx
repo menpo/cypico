@@ -40,19 +40,22 @@ cimport numpy as np
 
 
 cdef extern from "pico_wrapper.h":
-    int pico_detect_faces(const unsigned char* image, const int height,
-                          const int width, const int width_step,
-                          const int max_detections,
-                          const int n_orientations, const float scale_factor,
-                          const float stride_factor, const float min_size,
-                          const float q_cutoff,
-                          float* qs, float* rs, float* cs, float* ss)
+    int pico_detect_frontal_faces(const unsigned char* image, const int height,
+                                  const int width, const int width_step,
+                                  const int max_detections,
+                                  const int n_orientations,
+                                  const float* orientations,
+                                  const float scale_factor,
+                                  const float stride_factor,
+                                  const float min_size,
+                                  const float q_cutoff,
+                                  float* qs, float* rs, float* cs, float* ss)
 
 
-cpdef detect_faces(unsigned char[:, :] image, int max_detections=100,
-                   int n_orientations=1, float scale_factor=1.2,
-                   float stride_factor=0.1, float min_size=100,
-                   float confidence_cutoff=3.0):
+cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
+                           orientations=1, float scale_factor=1.2,
+                           float stride_factor=0.1, float min_size=100,
+                           float confidence_cutoff=3.0):
     r"""
     Detect faces in the given image. It will detect multiple faces and has
     the ability to detect faces that have been *in-plane* rotated. This implies
@@ -65,11 +68,12 @@ cpdef detect_faces(unsigned char[:, :] image, int max_detections=100,
         in the range 0 to 255.
     max_detections : int
         The maximum number of detections to return.
-    n_orientations : int
+    orientations : list of floats or int
         The number of orientations of the cascades to use. 1 will perform an
         axis aligned detection. Values greater than 1 will perform
         rotations of the cascade equally around a unit circle (equal number
-        of degrees).
+        of radians). If a list is passed, each item should be an orientation in
+        radians around the unit circle, with 0 being axis aligned.
     scale_factor : float
         The ratio to increase the cascade window at every iteration. Must
         be great than 1.0
@@ -110,22 +114,32 @@ cpdef detect_faces(unsigned char[:, :] image, int max_detections=100,
         raise ValueError('Scale factor must be greater than 1.0')
     if stride_factor >= 1.0:
         raise ValueError('Scale factor must be less than 1.0')
+
+    cdef float[:] orientations_arr
+    if type(orientations) == int:
+        orientations_arr = np.arange(orientations, dtype=np.float32)
+    else:
+        orientations_arr = np.asarray(orientations, dtype=np.float32)
+
     cdef:
         int height = image.shape[0]
         int width = image.shape[1]
         int n_detections = 0
+        int n_orientations = orientations_arr.shape[0]
         float[:] confidences = np.zeros(max_detections, dtype=np.float32)
         float[:] y_coords    = np.zeros(max_detections, dtype=np.float32)
         float[:] x_coords    = np.zeros(max_detections, dtype=np.float32)
         float[:] scales      = np.zeros(max_detections, dtype=np.float32)
 
     # Call the c wrapper that I created that hard codes the provided
-    n_detections = pico_detect_faces(&image[0, 0], height, width, width,
-                                     max_detections, n_orientations,
-                                     scale_factor, stride_factor,
-                                     min_size, confidence_cutoff,
-                                     &confidences[0], &y_coords[0],
-                                     &x_coords[0], &scales[0])
+    n_detections = pico_detect_frontal_faces(&image[0, 0], height, width,
+                                             width,
+                                             max_detections, n_orientations,
+                                             &orientations_arr[0],
+                                             scale_factor, stride_factor,
+                                             min_size, confidence_cutoff,
+                                             &confidences[0], &y_coords[0],
+                                             &x_coords[0], &scales[0])
 
     return (np.resize(confidences, n_detections),
             np.resize(y_coords, n_detections),

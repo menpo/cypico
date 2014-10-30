@@ -15,16 +15,18 @@ static char FACE_CASCADES[] =
 int pico_detect_objects(const unsigned char* image, const int height,
                         const int width, const int width_step,
                         const char* cascades, const int max_detections,
-                        const int n_orientations, const float scale_factor,
-                        const float stride_factor, const float min_size,
-                        const float q_cutoff,
+                        const int n_orientations, const float* orientations,
+                        const float scale_factor, const float stride_factor,
+                        const float min_size, const float q_cutoff,
                         float* qs, float* rs, float* cs, float* ss);
 
 
-int pico_detect_faces(const unsigned char* image, const int height,
-                      const int width, const int width_step,
-                      const int max_detections,
-                      const int n_orientations, const float scale_factor,
-                      const float stride_factor, const float min_size,
-                      const float q_cutoff,
-                      float* qs, float* rs, float* cs, float* ss);
+int pico_detect_frontal_faces(const unsigned char* image, const int height,
+                              const int width, const int width_step,
+                              const int max_detections,
+                              const int n_orientations,
+                              const float* orientations,
+                              const float scale_factor,
+                              const float stride_factor, const float min_size,
+                              const float q_cutoff,
+                              float* qs, float* rs, float* cs, float* ss);
