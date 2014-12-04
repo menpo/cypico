@@ -37,19 +37,3 @@ int pico_detect_objects(const unsigned char* image, const int height,
     return n_detections;
 }
 
-
-int pico_detect_frontal_faces(const unsigned char* image, const int height,
-                              const int width, const int width_step,
-                              const int max_detections,
-                              const int n_orientations,
-                              const float* orientations,
-                              const float scale_factor,
-                              const float stride_factor, const float min_size,
-                              const float q_cutoff,
-                              float* qs, float* rs, float* cs, float* ss) {
-   return pico_detect_objects(image, height, width, width_step,
-                              FACE_CASCADES, max_detections, n_orientations,
-                              orientations, scale_factor, stride_factor,
-                              min_size, q_cutoff,
-                              qs, rs, cs, ss);
-}

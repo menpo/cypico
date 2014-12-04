@@ -34,23 +34,14 @@
 # which can be found in the main repository under LICENSE.md
 
 # distutils: include_dirs = ./
-# distutils: sources = pico/runtime/picort.c cypico/pico_wrapper.c
+# distutils: sources = cypico/pico/runtime/picort.c cypico/pico_wrapper.c
 import numpy as np
 cimport numpy as np
-
+from cython cimport view
 
 cdef extern from "pico_wrapper.h":
-    int pico_detect_frontal_faces(const unsigned char* image, const int height,
-                                  const int width, const int width_step,
-                                  const int max_detections,
-                                  const int n_orientations,
-                                  const float* orientations,
-                                  const float scale_factor,
-                                  const float stride_factor,
-                                  const float min_size,
-                                  const float q_cutoff,
-                                  float* qs, float* rs, float* cs, float* ss)
-
+    const long FACE_CASCADES_SIZE
+    char* FACE_CASCADES
     int pico_detect_objects(const unsigned char* image, const int height,
                             const int width, const int width_step,
                             const char* cascades, const int max_detections,
@@ -59,9 +50,16 @@ cdef extern from "pico_wrapper.h":
                             const float min_size, const float q_cutoff,
                             float* qs, float* rs, float* cs, float* ss)
 
+# Allocate a typed memory view wrapped for the face cascades
+# Required to pass the static Face Cascades memory around in Python
+cdef view.array FACE_CASCADES_VIEW = view.array(
+    shape=(FACE_CASCADES_SIZE,), itemsize=sizeof(char), format='c',
+    mode='c', allocate_buffer=False)
+FACE_CASCADES_VIEW.data = <char *> FACE_CASCADES
+
 
 cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
-                           orientations=1, float scale_factor=1.2,
+                           orientations=0.0, float scale_factor=1.2,
                            float stride_factor=0.1, float min_size=100,
                            float confidence_cutoff=3.0):
     r"""
@@ -118,42 +116,17 @@ cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
         If ``scale_factor`` is less than or equal to 1.0
         If ``stride_factor`` is greater than or equal to 1.0
     """
-    if scale_factor <= 1.0:
-        raise ValueError('Scale factor must be greater than 1.0')
-    if stride_factor >= 1.0:
-        raise ValueError('Scale factor must be less than 1.0')
-
-    cdef float[:] orientations_arr
-    orientations_arr = np.asarray(orientations, dtype=np.float32)
-
-    cdef:
-        int height = image.shape[0]
-        int width = image.shape[1]
-        int n_detections = 0
-        int n_orientations = orientations_arr.shape[0]
-        float[:] confidences = np.zeros(max_detections, dtype=np.float32)
-        float[:] y_coords    = np.zeros(max_detections, dtype=np.float32)
-        float[:] x_coords    = np.zeros(max_detections, dtype=np.float32)
-        float[:] scales      = np.zeros(max_detections, dtype=np.float32)
-
-    # Call the c wrapper that I created that hard codes the provided
-    n_detections = pico_detect_frontal_faces(&image[0, 0], height, width,
-                                             width,
-                                             max_detections, n_orientations,
-                                             &orientations_arr[0],
-                                             scale_factor, stride_factor,
-                                             min_size, confidence_cutoff,
-                                             &confidences[0], &y_coords[0],
-                                             &x_coords[0], &scales[0])
-
-    return (np.resize(confidences, n_detections),
-            np.resize(y_coords, n_detections),
-            np.resize(x_coords, n_detections),
-            np.resize(scales, n_detections))
+    return detect_objects(image, FACE_CASCADES_VIEW,
+                          max_detections=max_detections,
+                          orientations=orientations, scale_factor=scale_factor,
+                          stride_factor=stride_factor, min_size=min_size,
+                          confidence_cutoff=confidence_cutoff)
 
 
-cpdef detect_objects(unsigned char[:, :] image, const char[:] cascades,
-                     int max_detections=100, orientations=1,
+
+
+cpdef detect_objects(unsigned char[:, :] image, char[::1] cascades,
+                     int max_detections=100, orientations=0.0,
                      float scale_factor=1.2, float stride_factor=0.1,
                      float min_size=100, float confidence_cutoff=3.0):
     r"""
@@ -220,6 +193,8 @@ cpdef detect_objects(unsigned char[:, :] image, const char[:] cascades,
         raise ValueError('Scale factor must be less than 1.0')
 
     cdef float[:] orientations_arr
+    if isinstance(orientations, (int, long, float, np.float32, np.float64)):
+        orientations = [orientations]
     orientations_arr = np.asarray(orientations, dtype=np.float32)
 
     cdef:
