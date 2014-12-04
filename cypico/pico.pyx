@@ -39,6 +39,7 @@ import numpy as np
 cimport numpy as np
 from cython cimport view
 from .pico cimport pico_detect_objects, FACE_CASCADES, FACE_CASCADES_SIZE
+from collections import namedtuple
 
 
 # Allocate a typed memory view wrapped for the face cascades
@@ -47,6 +48,10 @@ cdef view.array FACE_CASCADES_VIEW = view.array(
     shape=(FACE_CASCADES_SIZE,), itemsize=sizeof(char), format='c',
     mode='c', allocate_buffer=False)
 FACE_CASCADES_VIEW.data = <char *> FACE_CASCADES
+
+
+# Create a namedtuple to store a single detection
+PicoDetection = namedtuple('PicoDetection', ['confidence', 'center', 'diameter'])
 
 
 cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
@@ -86,20 +91,11 @@ cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
 
     Returns
     -------
-    confidences : (n_detections,) `ndarray`
-        The list of confidences of the detector that were greater than
-        the provided confidence cutoff.
-    y_coords : (n_detections,) `ndarray`
-        The list of floating point y-coordinates (row indices). This
-        represents the x-coordinate of the centre of the circle the face is
-        inside.
-    x_coords : (n_detections,) `ndarray`
-        The list of floating point x-coordinates (column indices). This
-        represents the x-coordinate of the centre of the circle the face is
-        inside.
-    scales : (n_detections,) `ndarray`
-        The list of floating point scales of the detections. This represents
-        the diameter of the circle the face is inside.
+    detections : list of ``PicoDetection``
+        The list of detections. Each ``PicoDetection`` represents a single
+        detection. A ``PicoDetection`` returns the confidence of the detection,
+        the centre coordinates of the circle ((y, x) as is common for images)
+        and the diameter of the circle.
 
     Raises
     ------
@@ -157,20 +153,11 @@ cpdef detect_objects(unsigned char[:, :] image, char[::1] cascades,
 
     Returns
     -------
-    confidences : (n_detections,) `ndarray`
-        The list of confidences of the detector that were greater than
-        the provided confidence cutoff.
-    y_coords : (n_detections,) `ndarray`
-        The list of floating point y-coordinates (row indices). This
-        represents the x-coordinate of the centre of the circle the face is
-        inside.
-    x_coords : (n_detections,) `ndarray`
-        The list of floating point x-coordinates (column indices). This
-        represents the x-coordinate of the centre of the circle the face is
-        inside.
-    scales : (n_detections,) `ndarray`
-        The list of floating point scales of the detections. This represents
-        the diameter of the circle the face is inside.
+    detections : list of ``PicoDetection``
+        The list of detections. Each ``PicoDetection`` represents a single
+        detection. A ``PicoDetection`` returns the confidence of the detection,
+        the centre coordinates of the circle ((y, x) as is common for images)
+        and the diameter of the circle.
 
     Raises
     ------
@@ -196,7 +183,7 @@ cpdef detect_objects(unsigned char[:, :] image, char[::1] cascades,
         float[:] confidences = np.zeros(max_detections, dtype=np.float32)
         float[:] y_coords    = np.zeros(max_detections, dtype=np.float32)
         float[:] x_coords    = np.zeros(max_detections, dtype=np.float32)
-        float[:] scales      = np.zeros(max_detections, dtype=np.float32)
+        float[:] diameters   = np.zeros(max_detections, dtype=np.float32)
 
     n_detections = pico_detect_objects(&image[0, 0], height, width,
                                        width, &cascades[0],
@@ -205,9 +192,12 @@ cpdef detect_objects(unsigned char[:, :] image, char[::1] cascades,
                                        scale_factor, stride_factor,
                                        min_size, confidence_cutoff,
                                        &confidences[0], &y_coords[0],
-                                       &x_coords[0], &scales[0])
+                                       &x_coords[0], &diameters[0])
 
-    return (np.resize(confidences, n_detections),
-            np.resize(y_coords, n_detections),
-            np.resize(x_coords, n_detections),
-            np.resize(scales, n_detections))
+    results = []
+    for i in range(n_detections):
+        results.append(PicoDetection(confidences[i],
+                                     np.array([y_coords[i], x_coords[i]]),
+                                     diameters[i]))
+
+    return results
