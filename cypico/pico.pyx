@@ -38,17 +38,8 @@
 import numpy as np
 cimport numpy as np
 from cython cimport view
+from .pico cimport pico_detect_objects, FACE_CASCADES, FACE_CASCADES_SIZE
 
-cdef extern from "pico_wrapper.h":
-    const long FACE_CASCADES_SIZE
-    char* FACE_CASCADES
-    int pico_detect_objects(const unsigned char* image, const int height,
-                            const int width, const int width_step,
-                            const char* cascades, const int max_detections,
-                            const int n_orientations, const float* orientations,
-                            const float scale_factor, const float stride_factor,
-                            const float min_size, const float q_cutoff,
-                            float* qs, float* rs, float* cs, float* ss)
 
 # Allocate a typed memory view wrapped for the face cascades
 # Required to pass the static Face Cascades memory around in Python
