@@ -51,6 +51,14 @@ cdef extern from "pico_wrapper.h":
                                   const float q_cutoff,
                                   float* qs, float* rs, float* cs, float* ss)
 
+    int pico_detect_objects(const unsigned char* image, const int height,
+                            const int width, const int width_step,
+                            const char* cascades, const int max_detections,
+                            const int n_orientations, const float* orientations,
+                            const float scale_factor, const float stride_factor,
+                            const float min_size, const float q_cutoff,
+                            float* qs, float* rs, float* cs, float* ss)
+
 
 cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
                            orientations=1, float scale_factor=1.2,
@@ -63,52 +71,52 @@ cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
 
     Parameters
     ----------
-    image : unsigned char[:, :]
+    image : `unsigned char[:, :]`
         The image to detect faces within. Should be a `uint8` image with values
         in the range 0 to 255.
-    max_detections : int
+    max_detections : `int`, optional
         The maximum number of detections to return.
-    orientations : list of floats or int
-        The number of orientations of the cascades to use. 1 will perform an
-        axis aligned detection. Values greater than 1 will perform
-        rotations of the cascade equally around a unit circle (equal number
-        of radians). If a list is passed, each item should be an orientation in
-        radians around the unit circle, with 0 being axis aligned.
-    scale_factor : float
+    orientations : list of `float`s or `float`, optional
+        The orientations of the cascades to use. ``0.0`` will perform an
+        axis aligned detection. Values greater than ``0.0`` will perform
+        detections of the cascade rotated counterclockwise around a unit circle.
+        If a list is passed, each item should be an orientation in
+        radians around the unit circle, with ``0.0`` being axis aligned.
+    scale_factor : `float`, optional
         The ratio to increase the cascade window at every iteration. Must
-        be great than 1.0
-    stride_factor : float
+        be greater than 1.0
+    stride_factor : `float`, optional
         The ratio to decrease the window step by at every iteration. Must be
-        less than 1.0
-    min_size : float
+        less than 1.0, optional
+    min_size : `float`, optional
         The minimum size in pixels (diameter of the detection circle) that a
         face can be. This is the starting cascade window size.
-    confidence_cutoff : float
+    confidence_cutoff : `float`, optional
         The confidence value to trim the detections with. Any detections with
         confidence less than the cutoff will be discarded.
 
     Returns
     -------
-    confidences : (n_detections,) ndarray
+    confidences : (n_detections,) `ndarray`
         The list of confidences of the detector that were greater than
         the provided confidence cutoff.
-    y_coords : (n_detections,) ndarray
+    y_coords : (n_detections,) `ndarray`
         The list of floating point y-coordinates (row indices). This
         represents the x-coordinate of the centre of the circle the face is
         inside.
-    x_coords : (n_detections,) ndarray
+    x_coords : (n_detections,) `ndarray`
         The list of floating point x-coordinates (column indices). This
         represents the x-coordinate of the centre of the circle the face is
         inside.
-    scales : (n_detections,) ndarray
+    scales : (n_detections,) `ndarray`
         The list of floating point scales of the detections. This represents
         the diameter of the circle the face is inside.
 
     Raises
     ------
     ValueError:
-        If scale_factor is less than or equal to 1.0
-        If stride_factor is greater than or equal to 1.0
+        If ``scale_factor`` is less than or equal to 1.0
+        If ``stride_factor`` is greater than or equal to 1.0
     """
     if scale_factor <= 1.0:
         raise ValueError('Scale factor must be greater than 1.0')
@@ -116,10 +124,7 @@ cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
         raise ValueError('Scale factor must be less than 1.0')
 
     cdef float[:] orientations_arr
-    if type(orientations) == int:
-        orientations_arr = np.arange(orientations, dtype=np.float32)
-    else:
-        orientations_arr = np.asarray(orientations, dtype=np.float32)
+    orientations_arr = np.asarray(orientations, dtype=np.float32)
 
     cdef:
         int height = image.shape[0]
@@ -140,6 +145,101 @@ cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
                                              min_size, confidence_cutoff,
                                              &confidences[0], &y_coords[0],
                                              &x_coords[0], &scales[0])
+
+    return (np.resize(confidences, n_detections),
+            np.resize(y_coords, n_detections),
+            np.resize(x_coords, n_detections),
+            np.resize(scales, n_detections))
+
+
+cpdef detect_objects(unsigned char[:, :] image, const char[:] cascades,
+                     int max_detections=100, orientations=1,
+                     float scale_factor=1.2, float stride_factor=0.1,
+                     float min_size=100, float confidence_cutoff=3.0):
+    r"""
+    Detect objects in the given image. It will detect multiple objects and has
+    the ability to detect objects that have been *in-plane* rotated. This
+    implies upside down objects, but not faces turned out of plane. The cascades
+    used to train the detector must be passed as an unsigned char array.
+
+    Parameters
+    ----------
+    image : `unsigned char[:, :]`
+        The image to detect objects within. Should be a `uint8` image with
+        values in the range 0 to 255.
+    cascades :  `unsigned char[:]`
+        The trained cascades to use for object detection. This should be trained
+        using the cypico training function.
+    max_detections : `int`, optional
+        The maximum number of detections to return.
+    orientations : list of `float`s or `float`, optional
+        The orientations of the cascades to use. ``0.0`` will perform an
+        axis aligned detection. Values greater than ``0.0`` will perform
+        detections of the cascade rotated counterclockwise around a unit circle.
+        If a list is passed, each item should be an orientation in
+        radians around the unit circle, with ``0.0`` being axis aligned.
+    scale_factor : `float`, optional
+        The ratio to increase the cascade window at every iteration. Must
+        be greater than 1.0
+    stride_factor : `float`, optional
+        The ratio to decrease the window step by at every iteration. Must be
+        less than 1.0, optional
+    min_size : `float`, optional
+        The minimum size in pixels (diameter of the detection circle) that a
+        face can be. This is the starting cascade window size.
+    confidence_cutoff : `float`, optional
+        The confidence value to trim the detections with. Any detections with
+        confidence less than the cutoff will be discarded.
+
+    Returns
+    -------
+    confidences : (n_detections,) `ndarray`
+        The list of confidences of the detector that were greater than
+        the provided confidence cutoff.
+    y_coords : (n_detections,) `ndarray`
+        The list of floating point y-coordinates (row indices). This
+        represents the x-coordinate of the centre of the circle the face is
+        inside.
+    x_coords : (n_detections,) `ndarray`
+        The list of floating point x-coordinates (column indices). This
+        represents the x-coordinate of the centre of the circle the face is
+        inside.
+    scales : (n_detections,) `ndarray`
+        The list of floating point scales of the detections. This represents
+        the diameter of the circle the face is inside.
+
+    Raises
+    ------
+    ValueError:
+        If ``scale_factor`` is less than or equal to 1.0
+        If ``stride_factor`` is greater than or equal to 1.0
+    """
+    if scale_factor <= 1.0:
+        raise ValueError('Scale factor must be greater than 1.0')
+    if stride_factor >= 1.0:
+        raise ValueError('Scale factor must be less than 1.0')
+
+    cdef float[:] orientations_arr
+    orientations_arr = np.asarray(orientations, dtype=np.float32)
+
+    cdef:
+        int height = image.shape[0]
+        int width = image.shape[1]
+        int n_detections = 0
+        int n_orientations = orientations_arr.shape[0]
+        float[:] confidences = np.zeros(max_detections, dtype=np.float32)
+        float[:] y_coords    = np.zeros(max_detections, dtype=np.float32)
+        float[:] x_coords    = np.zeros(max_detections, dtype=np.float32)
+        float[:] scales      = np.zeros(max_detections, dtype=np.float32)
+
+    n_detections = pico_detect_objects(&image[0, 0], height, width,
+                                       width, &cascades[0],
+                                       max_detections, n_orientations,
+                                       &orientations_arr[0],
+                                       scale_factor, stride_factor,
+                                       min_size, confidence_cutoff,
+                                       &confidences[0], &y_coords[0],
+                                       &x_coords[0], &scales[0])
 
     return (np.resize(confidences, n_detections),
             np.resize(y_coords, n_detections),
