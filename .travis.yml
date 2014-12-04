@@ -17,5 +17,4 @@ install:
 - conda config --add channels $BINSTAR_USER/channel/master
 
 script:
-- git submodule update --init --recursive
 - python condaci.py auto ./conda --binstaruser $BINSTAR_USER --binstarkey $BINSTAR_KEY
