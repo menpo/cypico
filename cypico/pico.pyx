@@ -33,6 +33,7 @@
 # pico.pyx, is separately licensed from the main Pico project (BSD 3-clause)
 # which can be found in the main repository under LICENSE.md
 
+# distutils: language = c++
 # distutils: include_dirs = ./
 # distutils: sources = cypico/pico/runtime/picort.c cypico/pico_wrapper.c
 import numpy as np
@@ -47,7 +48,7 @@ from collections import namedtuple
 cdef view.array FACE_CASCADES_VIEW = view.array(
     shape=(FACE_CASCADES_SIZE,), itemsize=sizeof(char), format='c',
     mode='c', allocate_buffer=False)
-FACE_CASCADES_VIEW.data = <char *> FACE_CASCADES
+FACE_CASCADES_VIEW.data = <unsigned char *> FACE_CASCADES
 
 
 # Create a namedtuple to store a single detection
