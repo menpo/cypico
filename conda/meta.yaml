@@ -6,12 +6,12 @@ requirements:
   build:
     - python
     - setuptools
-    - numpy 1.9.0
-    - cython 0.21
+    - numpy 1.9*
+    - cython 0.21*
 
   run:
     - python
-    - numpy 1.9.0
+    - numpy 1.9*
 
 test:
   imports:
