@@ -4,6 +4,6 @@ dist/*
 *.pyc
 build/*
 cypico/*.so
-cypico/pico.c
+cypico/pico.cpp
 
 cypico.egg-info/*
