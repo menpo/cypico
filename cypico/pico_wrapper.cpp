@@ -3,7 +3,7 @@
 
 int pico_detect_objects(const unsigned char* image, const int height,
                         const int width, const int width_step,
-                        const char* cascades, const int max_detections,
+                        const unsigned char* cascades, const int max_detections,
                         const int n_orientations, const float* orientations,
                         const float scale_factor,
                         const float stride_factor, const float min_size,
@@ -17,7 +17,8 @@ int pico_detect_objects(const unsigned char* image, const int height,
                                      &rs[n_detections], &cs[n_detections],
                                      &ss[n_detections], &qs[n_detections],
                                      max_detections - n_detections,
-                                     cascades, image, height, width,
+                                     (void*)cascades, (void*)image, 
+									 height, width,
                                      width_step, scale_factor,
                                      stride_factor, min_size,
                                      MIN(height, width), 1);

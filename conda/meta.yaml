@@ -8,6 +8,7 @@ requirements:
     - setuptools
     - numpy 1.9*
     - cython 0.21*
+    - msinttypes r26  # [win]
 
   run:
     - python

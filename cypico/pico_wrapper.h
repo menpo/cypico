@@ -6,16 +6,16 @@
     #define MIN(a, b) ((a)<(b)?(a):(b))
 #endif
 
-static const char FACE_CASCADES[] =
+static const unsigned char FACE_CASCADES[] =
 {
     #include "cypico/pico/runtime/cascades/facefinder.ea"
 };
-static const long FACE_CASCADES_SIZE = (long) (sizeof(FACE_CASCADES) / sizeof(char));
+static const long FACE_CASCADES_SIZE = (long) (sizeof(FACE_CASCADES) / sizeof(unsigned char));
 
 
 int pico_detect_objects(const unsigned char* image, const int height,
                         const int width, const int width_step,
-                        const char* cascades, const int max_detections,
+                        const unsigned char* cascades, const int max_detections,
                         const int n_orientations, const float* orientations,
                         const float scale_factor, const float stride_factor,
                         const float min_size, const float q_cutoff,

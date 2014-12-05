@@ -33,8 +33,9 @@
 # pico.pyx, is separately licensed from the main Pico project (BSD 3-clause)
 # which can be found in the main repository under LICENSE.md
 
+# distutils: language = c++
 # distutils: include_dirs = ./
-# distutils: sources = cypico/pico/runtime/picort.c cypico/pico_wrapper.c
+# distutils: sources = cypico/pico/runtime/picort.cpp cypico/pico_wrapper.cpp
 import numpy as np
 cimport numpy as np
 from cython cimport view
@@ -45,7 +46,7 @@ from collections import namedtuple
 # Allocate a typed memory view wrapped for the face cascades
 # Required to pass the static Face Cascades memory around in Python
 cdef view.array FACE_CASCADES_VIEW = view.array(
-    shape=(FACE_CASCADES_SIZE,), itemsize=sizeof(char), format='c',
+    shape=(FACE_CASCADES_SIZE,), itemsize=sizeof(unsigned char), format='B',
     mode='c', allocate_buffer=False)
 FACE_CASCADES_VIEW.data = <char *> FACE_CASCADES
 
@@ -110,7 +111,7 @@ cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
                           confidence_cutoff=confidence_cutoff)
 
 
-cpdef detect_objects(unsigned char[:, :] image, char[::1] cascades,
+cpdef detect_objects(unsigned char[:, :] image, unsigned char[::1] cascades,
                      int max_detections=100, orientations=0.0,
                      float scale_factor=1.2, float stride_factor=0.1,
                      float min_size=100, float confidence_cutoff=3.0):
