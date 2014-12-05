@@ -110,8 +110,6 @@ cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
                           confidence_cutoff=confidence_cutoff)
 
 
-
-
 cpdef detect_objects(unsigned char[:, :] image, char[::1] cascades,
                      int max_detections=100, orientations=0.0,
                      float scale_factor=1.2, float stride_factor=0.1,
