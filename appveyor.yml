@@ -7,6 +7,7 @@ environment:
       secure: mw1Fz5a5C0lT4CXzsOCADoo/Xa9YymZI3yjVZNR8f5GwYrVAOC2YXxyEG6NaSWZY
   matrix:
     - PYTHON_VERSION: 2.7
+    - PYTHON_VERSION: 3.4
     
 matrix:
   fast_finish: true
@@ -16,9 +17,8 @@ platform:
 - x64
 
 init:
-- ps: Start-FileDownload 'https://raw.githubusercontent.com/jabooth/condaci/v0.2.1/condaci.py' C:\\condaci.py; echo "Done"
+- ps: Start-FileDownload 'https://raw.githubusercontent.com/jabooth/condaci/v0.2.4/condaci.py' C:\\condaci.py; echo "Done"
 - cmd: python C:\\condaci.py setup %PYTHON_VERSION% --channel %BINSTAR_USER%
-- cmd: C:\\Miniconda\\Scripts\\conda config --add channels %BINSTAR_USER%/channel/master
 
 install:
 - cmd: git submodule update --init --recursive
