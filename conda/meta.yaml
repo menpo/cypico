@@ -6,17 +6,20 @@ requirements:
   build:
     - python
     - setuptools
-    - numpy 1.9*
-    - cython 0.21*
+    - numpy >=1.9.1,<1.10
+    - cython 0.22.*
     - msinttypes r26  # [win]
 
   run:
     - python
-    - numpy 1.9*
+    - numpy >=1.9.1,<1.10
 
 test:
+  requires:
+    - scipy
+
   imports:
-  - cypico
+    - cypico
 
 about:
   home: https://github.com/menpo/cypico/
