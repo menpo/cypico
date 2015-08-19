@@ -21,6 +21,7 @@ init:
 - cmd: python C:\\condaci.py setup
 
 install:
+- cmd: git submodule update --init --recursive
 - cmd: set tmp_cmd=python C:\\condaci.py miniconda_dir
 - cmd: "FOR /F %%i IN (' %tmp_cmd% ') DO SET APPV_MINICONDA_DIR=%%i"
 - cmd: set APPV_MINICONDA_EXE="%APPV_MINICONDA_DIR%\python.exe"
