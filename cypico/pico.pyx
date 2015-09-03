@@ -52,7 +52,8 @@ FACE_CASCADES_VIEW.data = <char *> FACE_CASCADES
 
 
 # Create a namedtuple to store a single detection
-PicoDetection = namedtuple('PicoDetection', ['confidence', 'center', 'diameter'])
+PicoDetection = namedtuple('PicoDetection', ['confidence', 'center', 'diameter', 
+                                             'orientation'])
 
 
 cpdef detect_frontal_faces(unsigned char[:, :] image, int max_detections=100,
@@ -175,14 +176,16 @@ cpdef detect_objects(unsigned char[:, :] image, unsigned char[::1] cascades,
     orientations_arr = np.asarray(orientations, dtype=np.float32)
 
     cdef:
+        int i = 0
         int height = image.shape[0]
         int width = image.shape[1]
         int n_detections = 0
         int n_orientations = orientations_arr.shape[0]
-        float[:] confidences = np.zeros(max_detections, dtype=np.float32)
-        float[:] y_coords    = np.zeros(max_detections, dtype=np.float32)
-        float[:] x_coords    = np.zeros(max_detections, dtype=np.float32)
-        float[:] diameters   = np.zeros(max_detections, dtype=np.float32)
+        float[:] confidences      = np.zeros(max_detections, dtype=np.float32)
+        float[:] out_orientations = np.zeros(max_detections, dtype=np.float32)
+        float[:] y_coords         = np.zeros(max_detections, dtype=np.float32)
+        float[:] x_coords         = np.zeros(max_detections, dtype=np.float32)
+        float[:] diameters        = np.zeros(max_detections, dtype=np.float32)
 
     n_detections = pico_detect_objects(&image[0, 0], height, width,
                                        width, &cascades[0],
@@ -191,12 +194,16 @@ cpdef detect_objects(unsigned char[:, :] image, unsigned char[::1] cascades,
                                        scale_factor, stride_factor,
                                        min_size, confidence_cutoff,
                                        &confidences[0], &y_coords[0],
-                                       &x_coords[0], &diameters[0])
+                                       &x_coords[0], &diameters[0],
+                                       &out_orientations[0])
 
     results = []
     for i in range(n_detections):
-        results.append(PicoDetection(confidences[i],
-                                     np.array([y_coords[i], x_coords[i]]),
-                                     diameters[i]))
+        results.append(PicoDetection(
+            confidences[i],
+            np.array([y_coords[i], x_coords[i]]),
+            diameters[i],
+            out_orientations[i])
+        )
 
     return results

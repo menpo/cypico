@@ -8,4 +8,4 @@ cdef extern from "pico_wrapper.h":
                             const int n_orientations, const float* orientations,
                             const float scale_factor, const float stride_factor,
                             const float min_size, const float q_cutoff,
-                            float* qs, float* rs, float* cs, float* ss)
+                            float* qs, float* rs, float* cs, float* ss, float* os)
