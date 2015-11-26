@@ -6,7 +6,7 @@ import versioneer
 
 cython_modules = ['cypico/pico.pyx']
 
-requirements = ['numpy>=1.9,<=1.10', 'Cython>=0.23,<=0.24']
+requirements = ['numpy>=1.10,<=1.11', 'Cython>=0.23,<=0.24']
 
 setup(name='cypico',
       version=versioneer.get_version(),
