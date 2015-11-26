@@ -6,7 +6,7 @@ Please see the `LICENSE.md` file for information on the licensing.
 
 Installation
 ------------
-``python setup.py install``
+Install using Python: ``python setup.py install``
 
 
 TODO
