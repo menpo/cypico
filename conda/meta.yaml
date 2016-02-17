@@ -16,7 +16,7 @@ requirements:
 
 test:
   requires:
-    - scipy
+    - pillow
 
   imports:
     - cypico
